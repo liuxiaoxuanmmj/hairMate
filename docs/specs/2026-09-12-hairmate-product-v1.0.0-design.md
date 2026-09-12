@@ -4,6 +4,7 @@
 - 文档状态：头脑风暴结论已整理，供用户书面复核；不代表产品已实现或已验收。
 - 决策标识：**已确认**为对话中达成的产品决定；**推荐基线**为待技术验证的实现建议；**开放决策**说明决定条件及边界，不作为已批准功能。
 - 当前项目阶段：产品定义与技术方向收敛，尚未初始化应用代码。
+- 首批真实用户：以中国大陆访问为主，已由用户确认。
 
 ## 产品摘要
 
@@ -20,6 +21,8 @@
 **真实照片与需求 → 可解释推荐 → 基准发型模拟 → 选定方案及 Haircut Brief → 用户自行选择理发师、现场确认并理发 → 剪后及首次自行打理后的反馈。**
 
 客户端采用 **Expo + React Native + TypeScript + Expo Router，App 优先**。首先通过真实设备和小范围内测验证闭环；Web 是未来按需增加的入口，不是必须经过的前置阶段。
+
+首批服务地区已确认以中国大陆为主。技术推荐据此收敛为国内部署、国内模型接口、私有图片存储和自托管认证；具体服务组合与模型效果仍需验证，不等于已经批准采购。
 
 ---
 
@@ -354,33 +357,44 @@ Expo 提供 Android、iOS 和 Web 的统一项目基础，但各平台依然需�
 | --- | --- | --- |
 | 客户端 | Expo、React Native、TypeScript、Expo Router | App 优先方向已确认；具体依赖版本在初始化时锁定 |
 | 后端 | 独立 TypeScript API，Fastify 初选，模块化单体 | 推荐基线；不把业务后端绑定到 Web 页面服务 |
-| Agent 运行层 | 单一顾问；AI SDK 初选，OpenAI Agents SDK 为替代 | 选择一个主框架；以所选 Provider 的工具调用、结构化输出支持验证 |
+| Agent 运行层 | 单一顾问；AI SDK + 国内 Provider 适配初选 | 直连选定百炼地域，不把海外 AI Gateway 作为必需依赖；校验实际支持能力 |
 | 图片任务 | 独立 Node.js worker，持久化任务状态与有限重试 | 推荐基线；与 API 可同仓，但独立进程运行 |
-| 数据库 | PostgreSQL；结构化关系 + 必要的 JSONB；版本迁移 | 推荐基线；不把全部业务状态仅藏在聊天记录中 |
-| 队列 | pg-boss + PostgreSQL；若选 Supabase，可评估其 Queues | 二选一即可；不用额外引入 Redis 来重复解决同一问题 |
-| 认证 | 支持 Expo 原生会话的现成认证方案；Better Auth 或 Supabase Auth 候选 | 根据部署地区、账号方式与服务可用性确定，不自行设计密码／会话协议 |
-| 图片存储 | 私有对象存储，短时访问授权，单独管理素材生命周期 | 国内云对象存储或 Supabase Storage 等，随地区与部署选择 |
+| 数据库 | 阿里云 RDS PostgreSQL 初选；结构化关系 + 必要的 JSONB；版本迁移 | 推荐基线；不把全部业务状态仅藏在聊天记录中 |
+| 队列 | pg-boss + PostgreSQL | 推荐基线；核实数据库版本和建表权限，不额外引入 Redis |
+| 认证 | Better Auth 自托管 + Expo 集成；内测登录方式初选邮箱／密码 | 推荐基线；验证会话恢复、邮件投递与找回；手机号／第三方登录按需求再定 |
+| 图片存储 | 阿里云 OSS 私有 Bucket、短时授权、素材生命周期 | 推荐基线；不为方便模型读取而将用户照片设为公开 |
 | 地图／线下信息 | 用户手动记录个人、门店、地址或现有链接 | V1 不引入地图检索／推荐 API，不需要定位权限来完成主路径 |
-| 监控 | 结构化日志、错误采集、任务与费用指标、Golden Path 事件 | 先一套可用工具，按部署环境选服务；不搭建复杂数据平台 |
-| 部署 | API 与 worker 独立运行，托管数据库和对象存储；App 开发构建／内测分发 | 服务地区与首批设备确定后落地供应商组合 |
+| 监控 | 云监控 + 阿里云 SLS 初选，记录错误、任务、费用和 Golden Path 事件 | 先验证关键告警与数据脱敏，不搭建复杂数据平台 |
+| 部署 | 阿里云国内 ECS + Docker Compose 初选；API／worker 独立进程，RDS／OSS 托管 | 小规模内测可同机运行 API 和 worker；不视为高可用架构；App 分发按首批设备验证 |
 
-候选能力依据：[Fastify](https://fastify.dev/docs/latest/)、[AI SDK ToolLoopAgent](https://ai-sdk.dev/docs/reference/ai-sdk-core/tool-loop-agent)、[OpenAI Agents SDK](https://developers.openai.com/api/docs/guides/agents/sdk)、[pg-boss](https://github.com/timgit/pg-boss)、[Supabase Queues](https://supabase.com/docs/guides/queues)、[Better Auth Expo 集成](https://better-auth.com/docs/integrations/expo)。这些文档支持能力判断，不证明 HairMate 组合已经联调通过。
+候选能力依据：[Fastify](https://fastify.dev/docs/latest/)、[AI SDK ToolLoopAgent](https://ai-sdk.dev/docs/reference/ai-sdk-core/tool-loop-agent)、[AI SDK 兼容 Provider 适配](https://ai-sdk.dev/providers/openai-compatible-providers)、[pg-boss](https://github.com/timgit/pg-boss)、[Better Auth Expo 集成](https://better-auth.com/docs/integrations/expo)。这些文档支持能力判断，不证明 HairMate 组合已经联调通过；兼容 OpenAI 接口不意味着调用 OpenAI 服务，也不意味着所有高级接口特性都兼容。
 
-### 11.3 模型与服务地区：候选规则，尚未锁定
+部署与素材能力依据：[ECS 上使用 Docker Compose](https://help.aliyun.com/zh/ecs/user-guide/install-and-use-docker)、[RDS PostgreSQL](https://help.aliyun.com/zh/rds/apsaradb-rds-for-postgresql/what-is-apsaradb-rds-for-postgresql)、[OSS 私有访问权限](https://help.aliyun.com/zh/oss/user-guide/oss-bucket-acl)、[OSS 临时签名访问](https://help.aliyun.com/zh/oss/user-guide/how-to-obtain-the-url-of-a-single-object-or-the-urls-of-multiple-objects/)、[SLS 日志与告警](https://help.aliyun.com/zh/sls/)。具体实例规格、地域、预算和账号权限在部署设计中确认，不在本次文档操作中开通服务。
 
-首批用户主要访问地区仍是开放决策。不能仅凭对话语言或时区推定服务地区；生产接入前，按实际地区、账号可用性、数据处理位置及授权样例评测选定组合。
+### 11.3 中国大陆优先：服务组合与模型评测
+
+**已确认首批用户以中国大陆访问为主。** 推荐先用国内组合跑通主路径，不将海外模型、认证或托管服务作为国内 V1 的必需运行依赖；不因此宣称所有网络和账号条件已经验证。
 
 | 使用条件 | 可评估组合 | 关键验证 |
 | --- | --- | --- |
-| 中国大陆为主 | 国内部署 API／worker + 托管 PostgreSQL + 私有对象存储；阿里云百炼 Qwen 视觉理解与 Qwen Image Edit 编辑候选；原生兼容认证 | 核实具体模型、地域的工具调用和结构化输出支持；从目标网络验证上传、生成及结果下载 |
-| 海外受支持地区为主 | Render API／Background Worker + Supabase 数据、认证和存储；OpenAI 视觉理解与图像编辑候选；可对照测试 Gemini 图像编辑 | 核实 Provider 支持地区与账号权限；验证身份保留、发型一致性、原生登录和任务恢复 |
-| 两类用户都需要覆盖 | 共用业务契约和 Provider 接口，分别验证区域服务组合 | 先确认首个试点范围，不默认建设双区域同步、账号互通与全局数据系统 |
+| 中国大陆为主（当前已确认条件） | 国内 ECS + RDS PostgreSQL + OSS + Better Auth；百炼北京地域的视觉理解及图片编辑 | 从真实设备和目标网络验证登录、上传、生成、结果下载与回访 |
+| 未来主要服务海外受支持地区 | 可重新评估 Render + Supabase，以及 OpenAI／Gemini 模型 | 仅作未来替代路线；重新确认支持地区、账号、数据用途和实际质量，不并行建设 |
+| 未来需要同时覆盖两类用户 | 共用业务契约与 Provider 接口，分别验证区域组合 | 另行评估需求，不默认引入双区域同步、账号互通和全局数据系统 |
 
 模型分工：顾问模型负责照片理解、文字推理、工具调用和结构化方案；图片编辑模型负责基于真实照片修改头发。两者可来自不同 Provider，不能假设一个模型同时具备所有能力。
 
-优先比较三类结果：是否遵守人物和非发型要素约束、是否呈现方案关键要求、在授权额度内的成功率／等待时间／真实费用。使用用户授权的真实样例做基准；目前未执行付费调用或质量测试，不宣称任何候选已经达到 HairMate 的效果要求。具体型号、快照版本、价格、地域和接口能力在接入前复核并记录，避免将“当前别名”视为永久行为保证。
+建议以百炼华北 2（北京）的 **`qwen3-vl-plus-2025-12-19` + `qwen-image-edit-plus-2025-12-15`** 为首组可复现评测基线；图片编辑可用 **`qwen-image-edit-max-2026-01-16`** 做质量对照。这些是官方仍列出的评测候选，不是“最新必然最好”的判断，也未被用户批准为最终型号。参考 [顾问模型](https://help.aliyun.com/zh/model-studio/qwen3-vl-plus)、[Edit Plus](https://help.aliyun.com/zh/model-studio/qwen-image-edit-plus)、[Edit Max](https://help.aliyun.com/zh/model-studio/qwen-image-edit-max)。
 
-候选服务资料：[阿里云 Qwen3-VL-Plus](https://help.aliyun.com/zh/model-studio/qwen3-vl-plus)、[Qwen Image Edit API](https://help.aliyun.com/en/model-studio/qwen-image-edit-api)、[OpenAI 图像生成与编辑](https://developers.openai.com/api/docs/guides/image-generation)、[OpenAI 支持地区](https://developers.openai.com/api/docs/supported-countries)、[Gemini 图像生成与编辑](https://ai.google.dev/gemini-api/docs/image-generation)、[Render 后台任务进程](https://render.com/docs/background-workers)。
+接入限制必须进入技术验证：
+
+- 顾问候选在北京地域支持视觉输入和 Function Calling；不能假设其他地域能力相同。端点、API Key 与模型地域应配套确认。
+- Qwen3-VL 的 JSON Object 结构化输出需使用非思考模式，且不保证字段符合指定 Schema；它未列入严格 JSON Schema 的支持列表。应用必须验证结构及业务约束，有限修正失败输出；不能在适配器中无依据地声明支持 strict Schema。参考 [百炼结构化输出](https://help.aliyun.com/zh/model-studio/qwen-structured-output)。
+- 这些图片编辑候选的 API 接受图片和文字，使用同步生成接口；HairMate 自己通过 worker 提供后台任务和状态查询，不虚构供应商的异步任务恢复能力。参考 [Qwen Image Edit API](https://help.aliyun.com/en/model-studio/qwen-image-edit-api)。
+- 编辑结果链接为临时链接，官方说明有效期为 24 小时；成功后及时转存私有 OSS。供应商成功返回但产品判定不合格的图片，其再生成仍应计入预算；客户端超时也不能当作供应商确认失败。参考 [图片编辑指南](https://help.aliyun.com/zh/model-studio/qwen-image-edit-guide)。
+
+优先比较三类结果：是否遵守人物和非发型要素约束、是否呈现方案关键要求、在授权额度内的成功率／等待时间／真实费用。使用用户授权的真实样例做基准；目前未执行付费调用或质量测试，不宣称候选已经达到 HairMate 的效果要求。具体型号、快照版本、价格、地域和接口能力在接入前复核并记录，避免将“当前别名”视为永久行为保证。
+
+未来海外替代路线的资料：[OpenAI 图像生成与编辑](https://developers.openai.com/api/docs/guides/image-generation)、[OpenAI 支持地区](https://developers.openai.com/api/docs/supported-countries)、[Gemini 图像生成与编辑](https://ai.google.dev/gemini-api/docs/image-generation)、[Render 后台任务进程](https://render.com/docs/background-workers)。本次不实施海外组合。
 
 ### 11.4 组件边界与数据流
 
@@ -405,8 +419,8 @@ App 关闭后，已提交的任务由服务端继续处理；重新打开时查�
 - **权限与密钥**：Provider 密钥只留在服务端；原生会话使用适当的安全存储，验证刷新与登录回调；客户端不得自行决定业务权限。参考 [Expo SecureStore](https://docs.expo.dev/versions/latest/sdk/securestore/)。
 - **任务与额度**：创建任务时校验用户、输入素材、方案版本及授权，预留额度并保证业务幂等；重试也纳入费用上限，达到上限停止。启用会产生 Provider 成本的真实生成任务前，包括样例测试和免费内测，先配置额度、停止条件与等待预期并向使用者说明，再根据测量结果调整；这不意味着 V1 向用户收费。
 - **不明状态处理**：外部请求超时不等于未执行；可查询 Provider 任务时先查状态，不能查询时保留待核实状态并限制重发。队列可靠性不等于第三方调用绝不会重复计费。
-- **结果保管**：临时 Provider 下载地址不是长期素材库；及时转存至私有对象存储，通过授权访问。数据库备份和图片备份分别验证；例如 Supabase 的数据库备份不包含 Storage 对象本身，见 [备份说明](https://supabase.com/docs/guides/platform/backups)。
-- **输入与隐私**：只申请当前功能所需的照片权限；验证类型和大小；日志不记录原图、完整私密对话、访问令牌或带权限的素材链接。访问私有素材使用授权机制，参考 [Supabase 下载与签名链接](https://supabase.com/docs/guides/storage/serving/downloads)。
+- **结果保管**：临时 Provider 下载地址不是长期素材库；及时转存至私有 OSS，通过授权访问。RDS 数据库与 OSS 图片的备份、删除及恢复分别验证，不能用数据库已备份代替素材恢复测试。
+- **输入与隐私**：只申请当前功能所需的照片权限；验证类型和大小；日志不记录原图、完整私密对话、访问令牌或带权限的素材链接。访问私有素材使用授权机制，详见第 11.2 节的 OSS 权限与签名访问资料。
 - **可观测与测试**：记录任务耗时、结果、失败类别、重试、模型和模板版本、使用量及费用；以固定授权样例回归推荐和图片质量，覆盖权限、版本、额度、重试与 Golden Path 的确定性测试。
 
 暂不引入：多 Agent 编排、多数据库、独立向量数据库、复杂检索平台、Kubernetes、完整微服务体系、双区域同步、实时通信平台或商家系统。只有明确需求和测量结果说明必要时再增加。
@@ -440,10 +454,10 @@ App 关闭后，已提交的任务由服务端继续处理；重新打开时查�
 
 | 决策 | 当前状态 | 何时必须明确／未明确时的约束 |
 | --- | --- | --- |
-| 首批用户使用地区 | 未选择，不从语言推断 | 锁定生产 Provider、认证和部署前明确；现阶段只保留条件化候选 |
 | 首批内测设备平台 | 未选择 | 分发真实设备构建前明确；不承诺双端同步正式上架 |
 | 真实生活照片模拟细节 | 用户明确要求后续细化 | 纳入具体发布前单独确认输入、模板、交互、额度与验收；不进入当前强制路径 |
-| 模型与云服务具体型号／供应商 | 候选已列，无付费联调或效果验证 | 基于地区、账号可用性和样例测试锁定；不因框架选择而默认批准采购 |
+| 国内模型与云服务具体型号／供应商 | 国内组合与模型评测基线已推荐，无付费联调或效果验证 | 在已确认的大陆优先条件下，基于账号、预算与样例测试锁定；不默认批准采购 |
+| 登录方式 | 内测初选邮箱／密码，尚未最终确认 | 真实用户登录前确认方式与找回路径；不因大陆优先而自动引入短信或微信集成 |
 | 模拟额度、耗时与费用阈值 | 尚无测量结果，不编造数值承诺 | 启用产生 Provider 成本的真实任务前设定硬上限、展示及停止条件；免费内测同样适用 |
 
 上述开放项不阻止本版产品范围和 App 方向成立，但文档不能被解释为所有生产配置或生活场景功能已经确定。
@@ -452,6 +466,6 @@ App 关闭后，已提交的任务由服务端继续处理；重新打开时查�
 
 | 版本 | 日期 | 内容 |
 | --- | --- | --- |
-| v1.0.0 | 2026-09-12 | 汇总 11 题的方案与确认结论；明确完整线下闭环、App 优先、真实生活照片模拟边界、数据模型及试点验收；标注技术候选与开放决策 |
+| v1.0.0 | 2026-09-12 | 汇总 11 题的方案与确认结论；明确完整线下闭环、App 优先、中国大陆首批用户、真实生活照片模拟边界、数据模型及试点验收；补充国内技术推荐与模型评测基线，标注尚需验证的决策 |
 
 书面复核重点：是否准确体现用户需求、已确认边界和成功口径。通过本版产品文档复核不等于已授权开通云服务、调用付费模型或执行应用代码初始化；下一阶段实施范围需另行明确。
