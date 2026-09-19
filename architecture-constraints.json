@@ -1,0 +1,684 @@
+{
+  "schemaVersion": 1,
+  "sourceDigests": {
+    "AGENTS.md": "effa580c3f47ccb858fb028672cbbf2e7fadb89488f8e6b00b2c3a6fab9b5881",
+    "ARCHITECTURE.md": "e8fba0cd98c79c0ce16e43e8252e9bb3f28a5f19779498c37513fd7eda384f1d",
+    "MODULES.md": "7553b6a7cc98bb2e6dab2591430e1ae9fbb2689a939beae494d0ecc625ae498e"
+  },
+  "note": "按不变量组映射，不把整章标为已实现。enforced 仅覆盖 description 限定的基线；pending 必须在对应业务切片落地前增加实际正反例并更新状态。源码约束文档变更会使摘要检查失败，须逐项复核映射；不得只刷新摘要。业务模块尚未创建，模拟违规源码仅为测试临时文件。",
+  "constraints": [
+    {
+      "id": "BASE-01",
+      "status": "enforced",
+      "description": "六个工作区包、既定 App-first 技术组合与精确依赖；业务模块目录当前为空，禁止新增业务域、Reserved SDK、事件/DI 平台。",
+      "sources": [
+        "AGENTS.md:Working Rules — Stay in Scope",
+        "ARCHITECTURE.md:1.3",
+        "ARCHITECTURE.md:8",
+        "ARCHITECTURE.md:10.1",
+        "ARCHITECTURE.md:11.2",
+        "ARCHITECTURE.md:11.3",
+        "MODULES.md:8.2",
+        "MODULES.md:9.1"
+      ],
+      "checks": [
+        "tests/architecture/boundaries.test.ts",
+        "tests/architecture/tooling.test.ts"
+      ],
+      "commands": [
+        "pnpm run lint",
+        "pnpm run test:architecture"
+      ],
+      "rules": [
+        "PROJECT_SCOPE"
+      ]
+    },
+    {
+      "id": "BASE-02",
+      "status": "enforced",
+      "description": "模块不互调；workflows 只能访问 public.ts；深层导入、路径别名、重导出、动态导入及循环依赖检查。public.ts 不直接重导出 Adapter/Port。",
+      "sources": [
+        "AGENTS.md:Project Map & Invariants",
+        "ARCHITECTURE.md:2.2",
+        "MODULES.md:1.1",
+        "MODULES.md:1.2",
+        "MODULES.md:2.3",
+        "MODULES.md:3.1"
+      ],
+      "checks": [
+        "tests/architecture/boundaries.test.ts"
+      ],
+      "commands": [
+        "pnpm run lint",
+        "pnpm run test:architecture"
+      ],
+      "rules": [
+        "MODULE_BOUNDARY",
+        "PUBLIC_SURFACE",
+        "CYCLE",
+        "RESOLUTION",
+        "DYNAMIC_IMPORT"
+      ]
+    },
+    {
+      "id": "BASE-03",
+      "status": "enforced",
+      "description": "domain/application/ports 不导入框架、Node 或外侧实现；Adapter 必须依赖自有 Port；工作流不导入数据库 SDK。",
+      "sources": [
+        "ARCHITECTURE.md:2.2",
+        "ARCHITECTURE.md:3.11",
+        "MODULES.md:1.2",
+        "MODULES.md:7.1"
+      ],
+      "checks": [
+        "tests/architecture/boundaries.test.ts"
+      ],
+      "commands": [
+        "pnpm run lint",
+        "pnpm run test:architecture"
+      ],
+      "rules": [
+        "LAYER_DIRECTION",
+        "ADAPTER_PORT"
+      ]
+    },
+    {
+      "id": "BASE-04",
+      "status": "enforced",
+      "description": "Mobile 仅消费客户端代码；contracts 仅依赖 Zod 与自身文件；追踪工作区导入和 npm 生产依赖闭包；三个平台 Metro 源映射不能含服务端实现或服务端专用测试标记。",
+      "sources": [
+        "AGENTS.md:ARCHITECTURE Constraint Checks",
+        "ARCHITECTURE.md:2.2",
+        "ARCHITECTURE.md:9.2",
+        "MODULES.md:3.1"
+      ],
+      "checks": [
+        "tests/architecture/boundaries.test.ts",
+        "scripts/check-mobile-build.mjs"
+      ],
+      "commands": [
+        "pnpm run lint",
+        "pnpm run test:architecture",
+        "pnpm run build"
+      ],
+      "rules": [
+        "CLIENT_BOUNDARY",
+        "CONTRACT_PURITY",
+        "ENV_BOUNDARY"
+      ]
+    },
+    {
+      "id": "BASE-05",
+      "status": "enforced",
+      "description": "显式 composition 工厂与函数内状态；拒绝模块级可写变量和依赖环；不使用全局 Service Locator。完整服务注册及业务 DTO 语义随对应模块验证。",
+      "sources": [
+        "ARCHITECTURE.md:2.2",
+        "MODULES.md:1.2"
+      ],
+      "checks": [
+        "tests/architecture/boundaries.test.ts"
+      ],
+      "commands": [
+        "pnpm run lint",
+        "pnpm run test:architecture"
+      ],
+      "rules": [
+        "COMPOSITION",
+        "CYCLE"
+      ]
+    },
+    {
+      "id": "BASE-06",
+      "status": "enforced",
+      "description": "Runtime 不导入模块、工具实现或工作流；工具实现只访问 workflows/leaf。当前没有 Runtime/工具运行注册，业务执行规则待实现。",
+      "sources": [
+        "AGENTS.md:Project Map & Invariants",
+        "ARCHITECTURE.md:6.1",
+        "ARCHITECTURE.md:6.3",
+        "MODULES.md:1.2",
+        "MODULES.md:2.3"
+      ],
+      "checks": [
+        "tests/architecture/boundaries.test.ts"
+      ],
+      "commands": [
+        "pnpm run lint",
+        "pnpm run test:architecture"
+      ],
+      "rules": [
+        "RUNTIME_LEAF"
+      ]
+    },
+    {
+      "id": "BASE-07",
+      "status": "enforced",
+      "description": "配置经组合入口校验并冻结，默认 fake/local；production/live/oss 及非法配置拒绝；App 只读 EXPO_PUBLIC_API_URL，错误不回显配置值。",
+      "sources": [
+        "ARCHITECTURE.md:9.2",
+        "MODULES.md:7.2"
+      ],
+      "checks": [
+        "tests/unit/config.test.ts",
+        "tests/architecture/boundaries.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run lint",
+        "pnpm run test:architecture"
+      ],
+      "rules": [
+        "ENV_BOUNDARY"
+      ]
+    },
+    {
+      "id": "BASE-08",
+      "status": "enforced",
+      "description": "健康接口共用 Zod/JSON Schema；拒绝未知输入/响应状态；服务端 requestId；安全错误码和 503；live 只检查进程，ready 检查真实 PG；关闭 HTTP 缓存。无个人资源接口。",
+      "sources": [
+        "ARCHITECTURE.md:7.1",
+        "ARCHITECTURE.md:7.4",
+        "ARCHITECTURE.md:9.1",
+        "ARCHITECTURE.md:9.6",
+        "MODULES.md:3.2",
+        "MODULES.md:9.1"
+      ],
+      "checks": [
+        "tests/contracts/http.test.ts",
+        "tests/unit/api-client.test.ts",
+        "tests/integration/baseline.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:contracts",
+        "pnpm run test:unit",
+        "pnpm run test:integration"
+      ],
+      "rules": []
+    },
+    {
+      "id": "BASE-09",
+      "status": "enforced",
+      "description": "集成/E2E 只接受 APP_ENV=test 下显式 TEST_DATABASE_URL；回环地址、测试库名和角色、无参数覆盖；连接后校验实际 PG 库/角色；不回退 DATABASE_URL、不迁移/清库。",
+      "sources": [
+        "AGENTS.md:Verification Commands",
+        "AGENTS.md:Testing Rules — Required Levels",
+        "ARCHITECTURE.md:9.7"
+      ],
+      "checks": [
+        "tests/unit/config.test.ts",
+        "tests/integration/baseline.test.ts",
+        "scripts/test-database.mjs"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:e2e"
+      ],
+      "rules": []
+    },
+    {
+      "id": "BASE-10",
+      "status": "enforced",
+      "description": "客户端请求有超时、取消与安全错误，不自动重放；App 防重复点击、卸载取消、失败后由用户重试；worker 验证 PG 后常驻，仅处理进程生命周期，无 job 消费。",
+      "sources": [
+        "ARCHITECTURE.md:9.4",
+        "ARCHITECTURE.md:9.6",
+        "ARCHITECTURE.md:9.7"
+      ],
+      "checks": [
+        "tests/unit/api-client.test.ts",
+        "tests/unit/worker.test.ts",
+        "apps/mobile/src/welcome/WelcomeScreen.test.tsx",
+        "tests/e2e/connection.spec.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:e2e"
+      ],
+      "rules": []
+    },
+    {
+      "id": "BASE-11",
+      "status": "enforced",
+      "description": "七项基础检查与 E2E 均为实际执行入口；状态一致性、拒绝缺项、空测试及显式跳过；规则有合法/最小违规样例；缺路径和解析失败非零；文档摘要防止约束映射静默过期。",
+      "sources": [
+        "AGENTS.md:ARCHITECTURE Constraint Checks",
+        "AGENTS.md:Definition of Done",
+        "AGENTS.md:End of Session",
+        "ARCHITECTURE.md:9.7",
+        "MODULES.md:9.1"
+      ],
+      "checks": [
+        "scripts/verify-harness.test.mjs",
+        "tests/architecture/boundaries.test.ts",
+        "tests/architecture/tooling.test.ts"
+      ],
+      "commands": [
+        "./init.sh --app",
+        "pnpm run test:architecture"
+      ],
+      "rules": [
+        "NO_SKIPPED_TESTS",
+        "RESOLUTION"
+      ]
+    },
+    {
+      "id": "IDENTITY",
+      "status": "pending",
+      "description": "身份供应商与业务 User 分离；所有个人读写和 worker 逐次检查 owner/状态；Actor、CallOrigin、UserActionRef、ScopedFacts 只由可信服务端形成；确认/授权/撤销/删除仅走用户通道，拒绝 forged actor/confirmed/grant。",
+      "sources": [
+        "AGENTS.md:Project Map & Invariants",
+        "ARCHITECTURE.md:3.1",
+        "ARCHITECTURE.md:9.1",
+        "MODULES.md:3.2",
+        "MODULES.md:4.1"
+      ],
+      "activateWhen": "首个 identity/个人资源切片；Better Auth 及邮件/找回按已确认方式接入。",
+      "plannedTests": [
+        "tests/integration/identity.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "PROFILES",
+      "status": "pending",
+      "description": "确认字段携带来源和确认时间；unknown/inferred 不升级 confirmed；长期偏好需独立用户确认；快照不可变且按版本解码；素材仅 assetId。",
+      "sources": [
+        "ARCHITECTURE.md:3.2",
+        "ARCHITECTURE.md:5.2",
+        "MODULES.md:4.2"
+      ],
+      "activateWhen": "实现 profiles 及引用快照的切片。",
+      "plannedTests": [
+        "tests/unit/profiles.test.ts",
+        "tests/integration/profiles.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "JOURNEYS",
+      "status": "pending",
+      "description": "目标、生命周期、选择、比较、交付证据由 Journey 拥有；真实用户动作与具体版本绑定；关闭/完整/降级/满意度独立；单一 visitId、Brief 和两类反馈时间；版本指纹、policyVersion 与固定五人28天试点口径。",
+      "sources": [
+        "ARCHITECTURE.md:3.3",
+        "ARCHITECTURE.md:4.4",
+        "ARCHITECTURE.md:5.3",
+        "MODULES.md:4.3",
+        "MODULES.md:5.3"
+      ],
+      "activateWhen": "实现 Journey 选择/证据/评估时逐项启用；不为缺 Visit 制造占位。",
+      "plannedTests": [
+        "tests/unit/journeys.test.ts",
+        "tests/integration/journeys.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "STYLING",
+      "status": "pending",
+      "description": "有合法来源的通用资料与私人方案分离；有界查询；模型草稿必须检查结构、硬限制、来源、快照与未知条件；推荐不自动选择；版本追加而非改历史。",
+      "sources": [
+        "ARCHITECTURE.md:3.4",
+        "ARCHITECTURE.md:4.1",
+        "MODULES.md:4.4"
+      ],
+      "activateWhen": "实现 styling 推荐/方案版本。",
+      "plannedTests": [
+        "tests/unit/styling.test.ts",
+        "tests/integration/styling.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "SIMULATIONS",
+      "status": "pending",
+      "description": "只启用 baseline；输入、方案、Grant 一致；currentAttempt CAS；执行成功与质量、用户选图分开；坏图计费；不明后新尝试须明确风险接受；旧结果独立留存，不覆写当前尝试/选择；只有可用且 accepted 的输出参与有效比较。",
+      "sources": [
+        "ARCHITECTURE.md:3.5",
+        "ARCHITECTURE.md:4.2",
+        "ARCHITECTURE.md:5.3",
+        "MODULES.md:4.5",
+        "MODULES.md:5.2"
+      ],
+      "activateWhen": "实现 simulations 和 ai-operations/media 调用链。",
+      "plannedTests": [
+        "tests/unit/simulations.test.ts",
+        "tests/integration/simulations.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "BRIEFS",
+      "status": "pending",
+      "description": "Brief 绑定具体方案及该方案快照；草稿核实来源/硬限制，不造精度或化学配方；仅确认当前选择修订，历史不覆盖；固定模板转义与授权图片；本地 PDF 导出取得成功才记交付，外部副本不能撤回。",
+      "sources": [
+        "ARCHITECTURE.md:3.6",
+        "ARCHITECTURE.md:4.3",
+        "MODULES.md:4.6",
+        "MODULES.md:5.3",
+        "MODULES.md:8.1"
+      ],
+      "activateWhen": "实现 briefs 与 App 查看/离线/PDF 导出链路。",
+      "plannedTests": [
+        "tests/unit/briefs.test.ts",
+        "tests/integration/briefs.test.ts",
+        "tests/e2e/brief-delivery.spec.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "HAIRCUTS",
+      "status": "pending",
+      "description": "Visit/Feedback 追加修订；原目标、现场约定、实际执行分开；体验时间与记录时间分开；after_cut 与 after_self_styling 同 Visit；代录有原话、不填猜测评分；私人 Stylist/Salon 分离、允许未知，不按同名自动合并，不做能力排名。",
+      "sources": [
+        "ARCHITECTURE.md:3.7",
+        "ARCHITECTURE.md:4.4",
+        "MODULES.md:4.7",
+        "MODULES.md:5.3"
+      ],
+      "activateWhen": "实现实际理发、现场修订和复盘反馈。",
+      "plannedTests": [
+        "tests/unit/haircuts.test.ts",
+        "tests/integration/haircuts.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "MEDIA",
+      "status": "pending",
+      "description": "用户对象操作归 Media；其他模块只持 assetId；上传用途、所有权、真实 MIME/尺寸/校验和/方向/EXIF；AssetUsage 同事务；受限 URL 下载校验 HTTPS/域名/DNS/重定向/大小，拒绝 SSRF；固定 Attempt 对象定位和幂等转存；访问/删除屏障及短 TTL 窗口。",
+      "sources": [
+        "ARCHITECTURE.md:3.8",
+        "ARCHITECTURE.md:9.1",
+        "ARCHITECTURE.md:9.5",
+        "MODULES.md:4.8",
+        "MODULES.md:8.1"
+      ],
+      "activateWhen": "实现首个 media/照片切片；届时建立存储依赖归属和真实本地素材集成检查。",
+      "plannedTests": [
+        "tests/integration/media.test.ts",
+        "tests/architecture/media-ownership.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "CONSULTATIONS",
+      "status": "pending",
+      "description": "用户原话、助手提议、摘要来源分离；消息先于 Run，相关关联原子；只取有界必要上下文，摘要不替代事实；不反调 Runtime；写提议与工具检查点原子，最终响应与 CompleteRun 原子。",
+      "sources": [
+        "ARCHITECTURE.md:3.9",
+        "ARCHITECTURE.md:6.4",
+        "MODULES.md:4.9",
+        "MODULES.md:5.1"
+      ],
+      "activateWhen": "实现顾问轮次/上下文/反馈代录。",
+      "plannedTests": [
+        "tests/unit/consultations.test.ts",
+        "tests/integration/consultations.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "AI-OPERATIONS",
+      "status": "pending",
+      "description": "真实确认的范围/用途/版本/素材/额度 Grant；每个调用有 Run/Attempt/执行权版本；prepared→dispatched 仅一次 CAS；所有作用域及 cost/image_count 原子预留、稳定锁序、精确计价；不明不释放，期限保守结算，晚到只计差额；等待用户释放 worker；旧执行权/当前状态映射/工具去重检查点。",
+      "sources": [
+        "ARCHITECTURE.md:3.10",
+        "ARCHITECTURE.md:5.2",
+        "ARCHITECTURE.md:5.3",
+        "ARCHITECTURE.md:9.3",
+        "MODULES.md:4.10"
+      ],
+      "activateWhen": "实现首个持久化执行或预算切片。",
+      "plannedTests": [
+        "tests/unit/ai-operations.test.ts",
+        "tests/integration/ai-operations.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "ATOMIC-TASKS",
+      "status": "pending",
+      "description": "业务、预算、幂等、pg-boss job 和写工具检查点绑定同一真实 PG 事务；外层 commit 后才返回已提交；网络在事务外；队列/SDK/HTTP 生成自动重试关闭；ID-only/versioned 消息、旧版解码、未知不消费；不把 queue/202/200 当产品成功。",
+      "sources": [
+        "AGENTS.md:Project Map & Invariants",
+        "ARCHITECTURE.md:4.2",
+        "ARCHITECTURE.md:7.3",
+        "ARCHITECTURE.md:9.3",
+        "MODULES.md:3.3",
+        "MODULES.md:5.1",
+        "MODULES.md:5.2",
+        "MODULES.md:6.1",
+        "MODULES.md:6.2",
+        "MODULES.md:7.2"
+      ],
+      "activateWhen": "实现 TransactionPort/TaskPort 和第一个持久化任务；引入 pg-boss 后做故障注入/回滚/重复消费。",
+      "plannedTests": [
+        "tests/integration/atomic-tasks.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "DELETION-RECOVERY",
+      "status": "pending",
+      "description": "删除/撤销与派发/挂接共享 User→Journey→Consent→Grant→Asset→Simulation→执行/预算锁序；删除优先历史；各所有者清理自身内容，不借 CASCADE 绕过；独立恢复清单可靠登记后物理清理；晚到仅清理；自然到期与撤销分开；有界恢复 ID 查询和逐目标授权，恢复上线重施屏障。",
+      "sources": [
+        "ARCHITECTURE.md:4.5",
+        "ARCHITECTURE.md:5.4",
+        "ARCHITECTURE.md:9.5",
+        "MODULES.md:4.11",
+        "MODULES.md:4.12",
+        "MODULES.md:5.4",
+        "MODULES.md:7.2"
+      ],
+      "activateWhen": "实现删除/恢复与素材、AI 执行的完整切片。",
+      "plannedTests": [
+        "tests/integration/deletion-races.test.ts",
+        "tests/integration/backup-recovery.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "DATA-OWNERSHIP",
+      "status": "pending",
+      "description": "表/schema 归属、auth/pg-boss 独立命名空间；跨 owner/journey 外键；版本/预算/幂等自然唯一键；金额精确整数/decimal、UTC 与实际时区；Repository 仅自有具名有界操作，工作流不接收 SQL/ORM/他域 Repository。",
+      "sources": [
+        "ARCHITECTURE.md:5.1",
+        "ARCHITECTURE.md:5.2",
+        "ARCHITECTURE.md:5.5",
+        "MODULES.md:2.1",
+        "MODULES.md:2.2",
+        "MODULES.md:3.1",
+        "MODULES.md:7.1"
+      ],
+      "activateWhen": "首次引入业务表/Repository 时；目前只有 SELECT 1，没有表、业务事务或迁移。",
+      "plannedTests": [
+        "tests/architecture/table-ownership.test.ts",
+        "tests/integration/owner-constraints.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "SCHEMA-EVOLUTION",
+      "status": "pending",
+      "description": "增量迁移仅追加，expand/backfill/切换/contract；旧内容显式版本解码，不用新 Prompt 重生成历史；旧状态安全只读；数据库、内容、HTTP、消息版本分别管理；保留上一已发布格式回归。",
+      "sources": [
+        "ARCHITECTURE.md:5.5",
+        "ARCHITECTURE.md:7.1",
+        "MODULES.md:6.2",
+        "MODULES.md:9.1"
+      ],
+      "activateWhen": "第一次业务持久化和随后第一次已发布格式演进。",
+      "plannedTests": [
+        "tests/integration/migrations.test.ts",
+        "tests/contracts/backward-compatibility.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "RUNTIME-PROVIDERS",
+      "status": "pending",
+      "description": "单顾问有界步数/时限/token/预算；工具静态允许表且叶子命令统一规则；Prompt 版本化/固定样例、最小上下文、外部内容不升级指令/权限；无隐藏推理存储；Port 单次能力与经验证声明；供应商失败归一化，未知不重发、不静默跨地区/供应商 fallback。",
+      "sources": [
+        "ARCHITECTURE.md:6.1",
+        "ARCHITECTURE.md:6.2",
+        "ARCHITECTURE.md:6.3",
+        "ARCHITECTURE.md:6.4",
+        "ARCHITECTURE.md:6.5",
+        "ARCHITECTURE.md:7.5",
+        "ARCHITECTURE.md:9.4",
+        "MODULES.md:8.1"
+      ],
+      "activateWhen": "实现 Runtime/当前 Provider Adapter；启用真实模型须另获账号/样例/用途/预算授权。",
+      "plannedTests": [
+        "tests/unit/runtime.test.ts",
+        "tests/contracts/providers.test.ts",
+        "tests/integration/execution-recovery.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "PRIVATE-CLIENT",
+      "status": "pending",
+      "description": "会话安全存储、登录恢复/切换清私有缓存；最小照片权限、上传失败、旧状态只读、前后台轮询/续接不重新生成；认证回调/找回、PDF/分享失败不计成功。",
+      "sources": [
+        "ARCHITECTURE.md:1.1",
+        "ARCHITECTURE.md:9.1",
+        "ARCHITECTURE.md:9.5",
+        "ARCHITECTURE.md:9.7",
+        "MODULES.md:8.1"
+      ],
+      "activateWhen": "实现身份/素材/异步运行/交付的 App 切片。",
+      "plannedTests": [
+        "tests/e2e/private-client.spec.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "OPERATIONS-LIVE",
+      "status": "pending",
+      "description": "业务 JSON 日志关联 requestId/runId/attemptId/operation/耗时/安全码/费用依据；不记录原文、照片、Prompt、Secret、locator；受限 HTTPS/网络、API-worker 同版本、受控迁移部署、备份/清理/告警；真实设备、北京候选能力/用途/临时 URL、额度和保留决策；六步 Fake Golden Path 与真实试点分别验收。",
+      "sources": [
+        "ARCHITECTURE.md:9.2",
+        "ARCHITECTURE.md:9.5",
+        "ARCHITECTURE.md:9.6",
+        "ARCHITECTURE.md:9.7",
+        "ARCHITECTURE.md:12",
+        "MODULES.md:9.1"
+      ],
+      "activateWhen": "业务日志、部署及真实环境接入时；当前仅进程安全日志和连通性 E2E，不是完整业务验收。",
+      "plannedTests": [
+        "tests/integration/observability.test.ts",
+        "tests/golden-path/fake-journey.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    },
+    {
+      "id": "FUTURE-BOUNDARY",
+      "status": "pending",
+      "description": "生活照片只按批准的真实输入规格扩展；地图、通知、支付、匹配、Web 入口和服务拆分需明确产品批准/触发证据；不提前实现空接口、假成功 Provider、额外业务域或通用平台。",
+      "sources": [
+        "ARCHITECTURE.md:1.2",
+        "ARCHITECTURE.md:10.2",
+        "ARCHITECTURE.md:10.3",
+        "ARCHITECTURE.md:11.2",
+        "ARCHITECTURE.md:11.3",
+        "MODULES.md:8.2"
+      ],
+      "activateWhen": "只有明确范围批准后更新架构、注册清单与自动化规则；目前以 BASE-01 禁止新增。",
+      "plannedTests": [
+        "tests/architecture/capability-registration.test.ts"
+      ],
+      "commands": [
+        "pnpm run test:unit",
+        "pnpm run test:integration",
+        "pnpm run test:architecture",
+        "pnpm run test:e2e"
+      ]
+    }
+  ]
+}

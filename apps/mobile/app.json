@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "HairMate",
+    "slug": "hairmate",
+    "version": "0.0.0",
+    "scheme": "hairmate",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
+    "web": { "bundler": "metro", "output": "single" }
+  }
+}

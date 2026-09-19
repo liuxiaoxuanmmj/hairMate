@@ -1,0 +1,35 @@
+{
+  "name": "@hairmate/mobile", "version": "0.0.0", "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "EXPO_NO_DOTENV=1 EXPO_NO_TELEMETRY=1 expo start",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "EXPO_NO_DOTENV=1 jest --runInBand",
+    "build": "EXPO_NO_DOTENV=1 EXPO_NO_TELEMETRY=1 EXPO_OFFLINE=1 DATABASE_URL=HAIRMATE_SERVER_ONLY_SENTINEL AUTH_SECRET=HAIRMATE_SERVER_ONLY_SENTINEL expo export --platform all --source-maps --clear --max-workers 2"
+  },
+  "dependencies": {
+    "@hairmate/api-client": "workspace:*",
+    "@expo/log-box": "55.0.13",
+    "@expo/metro-runtime": "55.0.12",
+    "expo": "55.0.31",
+    "expo-constants": "55.0.17",
+    "expo-linking": "55.0.17",
+    "expo-router": "55.0.18",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-safe-area-context": "5.6.2",
+    "react-native-screens": "4.23.0",
+    "react-native-web": "0.21.2"
+  },
+  "devDependencies": {
+    "@babel/core": "7.29.0",
+    "@testing-library/react-native": "13.3.3",
+    "@types/jest": "29.5.14",
+    "@types/react": "19.2.2",
+    "babel-preset-expo": "55.0.25",
+    "jest": "29.7.0",
+    "jest-expo": "55.0.22",
+    "react-test-renderer": "19.2.0"
+  }
+}

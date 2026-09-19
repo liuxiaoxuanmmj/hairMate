@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-14",
+  "activeFeatureId": null,
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "初始化 HairMate Coding Agent harness",
+      "description": "建立项目入口、单任务状态、可运行验证和跨会话交接；不初始化应用或业务代码。",
+      "kind": "harness",
+      "dependencies": [],
+      "status": "done",
+      "acceptanceCriteria": [
+        "AGENTS.md 路由根目录三份设计文档，遵守十模块和授权边界。",
+        "状态与交接有真实内容；验证器拒绝重复 ID、循环依赖、无证据完成和多个活动任务。",
+        "./init.sh 在无应用清单时明确只通过 harness；--app 明确失败，不虚报应用通过。",
+        "技能结构校验与本地验证实际执行；现有文档和用户改动不变。"
+      ],
+      "evidence": "2026-09-13：./init.sh exit 0（仅 harness）；node scripts/verify-harness.test.mjs 8/8 通过；./init.sh --app exit 1，正确拒绝缺失应用清单；技能结构审计五项均 5/5；独立范围复核通过，三份源文档 SHA256 不变。详见 progress.md 与 session-handoff.md；未执行应用测试或真实环境验收。"
+    },
+    {
+      "id": "feat-002",
+      "name": "建立最小应用工程基线",
+      "description": "获授权后按 ARCHITECTURE §8–9.7、MODULES §9.1 建立 pnpm workspace、当前切片所需入口、契约和真实检查，不一次铺开十模块空实现。",
+      "kind": "application",
+      "dependencies": [
+        "feat-001"
+      ],
+      "status": "done",
+      "authorization": "2026-09-13 用户明确要求完成 feat-002；授权最小应用基线及必要本地依赖和隔离测试，不含真实 Provider、部署、提交或 push。",
+      "acceptanceCriteria": [
+        "锁定经验证兼容的工具与依赖版本、packageManager 和 lockfile，不重选既定技术栈。",
+        "仅创建当前切片必要的 App / API / worker / 契约入口，禁止客户端导入服务端实现。",
+        "根目录七项基础检查有实际内容；跨组件修改还须通过 test:e2e。架构约束映射到测试或 lint 规则且能发现违规；没有用例不假装已覆盖业务。",
+        "默认 Fake，无付费 Provider 调用；真 PG 集成仅允许独立 TEST_DATABASE_URL。",
+        "记录 ./init.sh --app 实际结果和未验证环境，缺失检查不标 done。"
+      ],
+      "evidence": "2026-09-13：./init.sh --app exit 0，实际顺序执行全部八项应用检查。层级 1：pnpm run test:unit exit 0，36 个 Vitest 用例及 3 个 Expo 组件用例通过，覆盖配置与隔离库护栏、HTTP 客户端、worker 生命周期和页面连接/失败/取消。层级 2：pnpm run test:integration exit 0，4 个用例通过，连接本次专用 PostgreSQL 17.6，覆盖 API/client/Drizzle/PG、worker 和失效连接。层级 3：pnpm run test:e2e exit 0，1 个浏览器用例从同一 Expo 页面贯通真实 HTTP/PG，验证服务中断、用户重试恢复及 worker 启停。lint、typecheck、test:contracts（6 个）、test:architecture（16 个及 14 文件实际依赖图）、build（Node/共享包与 Android/iOS/Web 三平台导出、三个源映射检查）均 exit 0；约束映射最终复核后 test:architecture 再次 exit 0。Node 22.23.2 / pnpm 10.33.4 与精确依赖及 lockfile 已锁定，pnpm install --frozen-lockfile --offline exit 0。harness 验证器 8/8 通过，git diff --check exit 0；三份源设计文档不变。隔离测试容器及网络已移除。11 组基线架构检查已落地，18 组业务语义按触发切片列为 pending；原生设备、签名安装包、真实 Provider/照片/理发及业务闭环未验证，不属于本次最小工程验收。详见 progress.md、session-handoff.md 和 engineering-baseline.md。"
+    },
+    {
+      "id": "feat-003",
+      "name": "补充三级测试与架构约束验证规约",
+      "description": "按用户要求更新 AGENTS.md 的测试门槛与架构约束自动化检查要求，同步状态与交接；不初始化应用或修改验证脚本。",
+      "kind": "harness",
+      "dependencies": [
+        "feat-001"
+      ],
+      "status": "done",
+      "acceptanceCriteria": [
+        "明确单元测试、集成测试必须通过，跨组件修改时端到端测试必须通过；跳过任何必须层级即未完成。",
+        "每条架构约束须有测试或 lint 规则及可追溯映射，提供符合 HairMate 边界的示例并要求检查错误失败。",
+        "明确 test:e2e 的独立执行要求和当前无应用工程的验证边界，不将新增规约冒充已实现检查。",
+        "仅修改 AGENTS.md 及三个状态 / 交接文件，运行适用 harness 检查并保留既有用户改动。"
+      ],
+      "evidence": "2026-09-13：./init.sh 基线及规约修改后均 exit 0（仅 harness）；node scripts/verify-harness.test.mjs exit 0，8/8 通过；技能结构审计 exit 0，五项均 5/5；git diff --check exit 0，快照哈希比对确认仅四个规约 / 状态文件变化。AGENTS.md 已复核三级门槛、跳过即未完成、架构约束映射与错误失败要求；未实现或执行应用三级测试及架构规则。详见 progress.md 本轮会话记录。"
+    },
+    {
+      "id": "feat-004",
+      "name": "制定开发计划并修复根目录文档引用",
+      "description": "依据现有产品、架构、模块契约和数据结构编写 PLAN.md，登记未启动切片，修复根目录文档引用及摘要，并恢复被大小写替换误改的验证工具标准标识；不实施业务功能。",
+      "kind": "harness",
+      "dependencies": ["feat-002", "feat-003"],
+      "status": "done",
+      "authorization": "2026-09-14 用户要求制定 PLAN.md，并修复 architecture-constraints.json、engineering-baseline.md、openapi.json 移至根目录后的引用；后续业务切片仅规划，未获实施授权。",
+      "acceptanceCriteria": [
+        "PLAN.md 明确当前基线、依赖顺序、十模块数据归属、公开调用链、事务边界、各切片验收和真实环境决策门槛。",
+        "后续切片登记为 not-started，依赖无环；规划不冒充业务实现或真实环境授权。",
+        "文档、OpenAPI 生成器、契约测试和架构测试均读取根目录目标；生成内容不漂移，不重建旧目录副本。",
+        "逐项复核约束并更新文档摘要；恢复验证器和编译配置的标准 Node / TypeScript 标识，运行 harness 及受影响的契约、架构和静态检查，记录完整入口环境限制，保留用户已有改动。"
+      ],
+      "evidence": "2026-09-14：PLAN.md 已完成，13 个后续切片仅为 not-started，18 组 pending 约束均有计划落点；没有启动业务实现。./init.sh --harness-only exit 0；node scripts/verify-harness.test.mjs exit 0，8/8 通过。node_modules/.bin/vitest run --project contracts --project architecture exit 0，6 个契约及 16 个架构用例通过；node scripts/check-architecture.mjs exit 0，14 个真实源码文件、客户端依赖闭包和测试门槛通过。node_modules/.bin/eslint . --max-warnings=0、node_modules/.bin/tsc --noEmit -p tsconfig.check.json 均 exit 0。node --import tsx scripts/openapi.ts exit 0，根目录 OpenAPI 与会话前字节一致；旧路径 rg exit 1 表示零匹配，文档链接 / 计划映射检查 exit 0。三份源设计文档及工程基线内容不变；摘要经逐项复核后更新，修复验证工具因大小写替换损坏的标准 API / 编译选项。git diff --check exit 0。启动 ./init.sh exit 1 的旧链接错误已修复，复跑仍 exit 1，因 PATH 缺 pnpm，未执行完整应用检查。本轮为文档 / harness / 工具引用修复，无应用实现、共享 Schema 或组件交互变更；应用层级 1 / 2 / 3 未复跑，层级 3 不适用，不宣称业务或真实环境验收。详见 progress.md 本轮记录。"
+    },
+    {
+      "id": "feat-005",
+      "name": "个人身份、会话恢复与用途授权",
+      "description": "按 PLAN.md 的首个业务切片实现 identity、首批 PG 迁移及 App 会话入口，保持认证供应商与业务 User 隔离。",
+      "kind": "application",
+      "dependencies": ["feat-004"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权，具体认证方式按现有开放决策核实。",
+      "acceptanceCriteria": [
+        "Better Auth 经 AuthPort / API 桥接生成可信 Actor；/me 和 Consent 确认、撤销遵循用户操作通道，不接受伪造身份与确认。",
+        "仅建立 identity 所需私有表、迁移、Repository、幂等与事务约束；业务 User 不直接等同认证库对象。",
+        "App 会话恢复、失效、退出和切换账号清缓存可验证；真实接入前落实已确认的登录与找回方式，不以假投递充当成功。",
+        "按 PLAN.md §7 通过全部应用检查与三级行为测试；落实 IDENTITY、PRIVATE-CLIENT、DATA-OWNERSHIP、SCHEMA-EVOLUTION 当前涉及部分，未实现语义保持 pending。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-006",
+      "name": "确认档案、不可变快照与历程续接",
+      "description": "按 PLAN.md 实现 profiles / journeys 的最小文字输入链路，保存事实来源、版本和可继续的个人历程。",
+      "kind": "application",
+      "dependencies": ["feat-005"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权。",
+      "acceptanceCriteria": [
+        "用户字段变更经 ApplyConfirmedProfileChange，保留 source / confirmedAt；unknown / inferred 不升级 confirmed，长期偏好有明确用户动作。",
+        "CaptureProfileSnapshot 固化 schemaVersion 和内容，修改当前档案不覆盖历史；expectedRevision 冲突拒绝覆盖。",
+        "App 创建、列出、续接本人历程；关闭、进度与完整评估分离，缺少照片或 Visit 时明确缺失，不制造占位实体。",
+        "按 PLAN.md §7 通过全部应用检查与三级行为测试，覆盖 owner / journey 关联、版本冲突、有界查询与旧格式解码，更新 PROFILES / JOURNEYS 等映射。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-007",
+      "name": "私有素材与可恢复删除",
+      "description": "按 PLAN.md 打通本地测试素材上传、校验、访问、业务引用和删除；以实际清理引入同事务任务和独立恢复清单。",
+      "kind": "application",
+      "dependencies": ["feat-006"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权，不包含真实照片或 OSS 服务调用。",
+      "acceptanceCriteria": [
+        "App 上传经 PrepareUpload / CompleteUpload，服务端检查真实类型、大小、尺寸、校验和、方向 / EXIF；未完成或非法素材不可 available。",
+        "仅 media 操作用户对象，其他模块只持 assetId；引用与 AssetUsage 同事务，访问逐次验证 owner、用途和生命周期。",
+        "当前已实现所有者的账号 / 历程 / 素材删除屏障与 ContinueDeletion job 同真实 PG 事务；独立清单登记后清理，失败保持 pending，不误删其他历程仍用素材。",
+        "按 PLAN.md §7 通过全部应用检查与三级行为测试，覆盖上传失败、越权、job 回滚、清单失败、重复清理与删除后访问；落实 MEDIA / ATOMIC-TASKS / DELETION-RECOVERY 当前部分。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-008",
+      "name": "有预算和检查点的后台顾问轮次",
+      "description": "按 PLAN.md 实现 consultations、ai-operations、受限 Runtime 与 Fake Advisor，从实际用户消息到持久化轮次结果。",
+      "kind": "application",
+      "dependencies": ["feat-007"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权，真实模型调用不在本切片默认范围。",
+      "acceptanceCriteria": [
+        "用户消息、附件 usage、AiRun、运行关联及 job 同事务提交，202 后 App 查询结果，前后台续接不重复提交。",
+        "每次模型回合经受控执行边界产生 Attempt、稳定执行权和全部顾问预算预留，步数 / token / 时限有界，付费执行的队列 / HTTP / SDK 自动重试关闭。",
+        "工具仅绑定已有叶子用例；写领域与 ToolCheckpoint 原子，最终回复与 CompleteRun 原子；awaiting_user 释放 worker，新回答新轮次。",
+        "重复消费、queued 超期、回合间宕机、dispatched 后不明与旧执行权拒绝均有行为证据，并同步本域清理 / 恢复查询。",
+        "按 PLAN.md §7 通过全部应用检查与三级行为测试，更新 CONSULTATIONS、AI-OPERATIONS、ATOMIC-TASKS、RUNTIME-PROVIDERS 和安全日志当前部分。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-009",
+      "name": "可解释推荐与不可变方案版本",
+      "description": "按 PLAN.md 通过真实顾问运行的叶子工具保存有来源的推荐、候选关联与 StylePlanVersion，并在 App 展示解释和版本。",
+      "kind": "application",
+      "dependencies": ["feat-008"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权。",
+      "acceptanceCriteria": [
+        "最小 Hairstyle 资料有经审阅的合法来源；推荐绑定 ProfileSnapshot、AiRun 与候选 versionId，不建立资料平台。",
+        "结构、来源、硬限制与未知条件由 Styling 校验；候选展示依据、改变 / 保留、维护取舍与冲突，不自动选择最终方案。",
+        "AppendPlanVersion 追加历史并校验 baseVersionId / expectedRevision；重复工具不重复写入，用户修改和模型草稿来源分开。",
+        "同步该模块删除与素材 usage；按 PLAN.md §7 通过全部应用检查与三级行为测试，覆盖无来源、错快照、硬限制冲突和并发版本，更新 STYLING / PROFILES 映射。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-010",
+      "name": "授权基准模拟、结果转存与失败恢复",
+      "description": "按 PLAN.md 使用 Fake ImageEditPort 打通 GenerationGrant、Simulation、Attempt、预算、持久化任务及 media 转存的真实应用链路。",
+      "kind": "application",
+      "dependencies": ["feat-009"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权，默认非个人本地素材和 Fake Provider。",
+      "acceptanceCriteria": [
+        "用户独立确认 / 撤销具体版本、素材、baseline 范围及额度；Simulation / Run / Attempt / 全部预算 / 幂等 / job 同真实 PG 事务。",
+        "所有适用作用域和 cost / image_count 维度原子预留；派发按统一锁序复查并 CAS，提交后事务外只出站一次。",
+        "结果观察与状态映射原子；转存同一结果，最终 Asset / Output / usage / Run 完成同事务；ready 仍待独立质量检查。",
+        "不明不自动重发或立即释放，期限保守结算和晚到差额核对正确；转存过期不重新生成，显式再尝试需余量与必要风险接受，旧结果不覆写 current。",
+        "删除 / 撤销与派发 / 挂接共享屏障，清理及有界恢复同步实现；按 PLAN.md §7 通过全部应用检查与三级行为测试，含真 PG 并发 / 回滚 / 故障注入并更新相关映射。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-011",
+      "name": "质量检查、有效比较与方案选择",
+      "description": "按 PLAN.md 实现独立人工质量记录、用户原图比较、采用输出和最终方案选择，区分执行成功、质量与业务证据。",
+      "kind": "application",
+      "dependencies": ["feat-010"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权。",
+      "acceptanceCriteria": [
+        "质量检查记录用户 / 受控维护来源、检查项及版本，模型不能自评 accepted；rejected 图不计有效比较且发生费用仍保留。",
+        "RecordComparison 需要本历程 accepted 输出、原图、planVersion 与实际用户动作；图片 ready 或 HTTP 200 不自动产生证据。",
+        "SelectPlan / SelectSimulationOutput 为具名用户命令，校验版本和并发；允许选未模拟方案但如实标识，旧图不冒充新版本。",
+        "按 PLAN.md §7 通过全部应用检查与三级行为测试，覆盖跨历程、版本错配、旧结果晚到、并发改选和跳过模拟的降级路径，补齐 SIMULATIONS / JOURNEYS 当前约束。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-012",
+      "name": "Brief 修订、确认与离线 PDF 交付",
+      "description": "按 PLAN.md 从选定方案及原快照生成可核验 Brief，用户确认具体修订，经 App 离线材料和 PDF 成功回执形成交付证据。",
+      "kind": "application",
+      "dependencies": ["feat-011"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权，原生设备与分发范围在验收前明确。",
+      "acceptanceCriteria": [
+        "Brief 使用方案绑定的 ProfileSnapshot，保留来源、硬限制、分区 / 维护 / 现场核实项；不造精确尺寸或化学配方。",
+        "用户独立确认指定 revision，事务保护当前 Selection 与 Brief 修订；改选、修改或新快照不覆盖旧确认内容。",
+        "固定模板转义文字、仅用已选择且授权的本地化材料；真实取得回执才记交付，导出失败 / 取消不记成功，补传幂等。",
+        "选定原生设备验证离线查看、PDF / 分享和缓存边界；缺设备证据不得以浏览器或 Fake 导出代替完成。",
+        "同步本域清理；按 PLAN.md §7 通过全部应用检查与三级行为测试，覆盖版本 / 确认竞态、缺失图片和导出失败，更新 BRIEFS / PRIVATE-CLIENT 等映射。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-013",
+      "name": "实际理发、两类反馈与单次闭环评估",
+      "description": "按 PLAN.md 实现 Visit / Feedback 修订、私人执行者快照及基于同一 visitId 的版本化 Journey 评估。",
+      "kind": "application",
+      "dependencies": ["feat-012"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权，自动化不使用真实个人理发记录。",
+      "acceptanceCriteria": [
+        "原目标、现场约定与实际执行分开；Visit PATCH 追加修订，保存实际出示 Brief 与当时私人 Stylist / Salon 快照，允许未知且同名不自动合并。",
+        "after_cut / after_self_styling 分别保存体验 / 记录时间和修订；代录有真实用户消息，不猜测评分或理发事实。",
+        "评估绑定同一 visitId、shownBriefRevision、已确认且取得的材料和两类反馈，保存证据修订及 policyVersion；满意度与 complete 独立。",
+        "同步清理 / usage；按 PLAN.md §7 通过全部应用检查与三级行为测试，覆盖跨 Visit 拼接、时间错误、缺材料 / 反馈及历史纠正，补齐 HAIRCUTS / JOURNEYS 当前约束。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-014",
+      "name": "Fake 完整链路、删除恢复与试点规则收口",
+      "description": "按 PLAN.md 组合验证已实现切片的六步链路、十模块清理恢复、业务观测和固定试点统计规则，不替代真实验收。",
+      "kind": "application",
+      "dependencies": ["feat-013"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；实施需新的开发授权，不包含真实用户邀请、照片处理或部署。",
+      "acceptanceCriteria": [
+        "从实际 App 经真实 API / worker / PG 完成六步，只有外部 Provider 使用 Fake；关键缺证据、重连和失败路径有端到端用例。",
+        "既有各域清理合并复核，独立清单失败、未挂接对象、共享素材、晚到及备份恢复均不导致复活或错误删除；不得推迟前序切片必需屏障至此。",
+        "有界恢复涵盖 queued / prepared / dispatched、顾问回合间、转存 / 清理，安全日志与告警不含敏感正文或 locator。",
+        "PilotEnrollment 和汇总用非个人样例验证五人各 28 天、发起人排除、三种比例、窗口外与缺失分类，删除隐私优先。",
+        "按 PLAN.md §7 通过全部应用检查与三级行为测试，Golden Path 用例接入 runner；完成已实施 MVP 语义的映射复核，真实及 Future 约束保持诚实状态。"
+      ],
+      "evidence": "仅有开发计划，尚未实施或验收。"
+    },
+    {
+      "id": "feat-015",
+      "name": "真实适配器与授权样例评测",
+      "description": "按 PLAN.md 在安全执行前置完成后核实并接入既有国内候选的模型 / OSS 能力，单独评测最大效果风险；可在完整 Fake 产品链之前选择。",
+      "kind": "application",
+      "dependencies": ["feat-010"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；真实账号、地域、样例处理用途、次数 / 成本上限和保留条件需单独明确授权。",
+      "acceptanceCriteria": [
+        "接入前核实实际型号 / 接口 / 能力并锁定 Adapter 依赖，先过离线契约与错误映射；不猜测查询、供应商幂等、取消能力或自动跨域 fallback。",
+        "ProviderResultFetcher 与私有 OSS 转存符合来源 / HTTPS / DNS / 重定向 / 类型 / 大小 / 期限和用途限制，受保护 locator 不进入 App 或日志。",
+        "只有用途 / 样例 / 地域 / 明确硬预算及结果处理条件全部满足才调用真实服务，生成不绕过既有 Attempt、额度和派发规则。",
+        "保存版本、人工质量、等待、失败类别、actual / estimated / unknown 用量及成本证据；质量未达门槛不宣称模型验收成功。",
+        "按 PLAN.md §7 通过全部应用检查与三级行为测试，另提供真实服务 / 样例证据，更新 RUNTIME-PROVIDERS、MEDIA、OPERATIONS-LIVE 对应约束。"
+      ],
+      "evidence": "仅有开发计划，尚未实施、调用真实服务或验收。"
+    },
+    {
+      "id": "feat-016",
+      "name": "选定设备与受控真实环境验收",
+      "description": "按 PLAN.md 完成原生设备、真实认证与网络链路、部署配置、预算 / 保留策略、告警和恢复演练的同版本验收。",
+      "kind": "application",
+      "dependencies": ["feat-014", "feat-015"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；设备 / 分发、登录找回、真实环境、采购 / 部署和数据保留须有相应明确授权。",
+      "acceptanceCriteria": [
+        "选定设备实际验证安装、最小照片权限、登录回调 / 恢复 / 真实找回、后台任务续接、离线 Brief / PDF / 分享及切换账号缓存。",
+        "配置和迁移先形成可审查结果；在明确部署授权下验证同版本 API / worker、HTTPS / 受限网络、Secret 注入、告警和优雅停止。",
+        "真实调用的额度、并发、截止、不明核对及保留期限已明确；缺上限拒绝生成，production 不使用 Fake 伪装成功。",
+        "实际验证数据库 / 对象备份与独立删除清单恢复，恢复后不复活已删除私人内容；记录真实链路限制和失败。",
+        "同一验收版本按 PLAN.md §7 通过全部应用检查与三级行为测试，另有设备 / 真实服务证据；缺必要环境时保持未完成。"
+      ],
+      "evidence": "仅有开发计划，尚未部署或完成设备 / 真实环境验收。"
+    },
+    {
+      "id": "feat-017",
+      "name": "发起人真实闭环与五人试点评估",
+      "description": "按 PLAN.md 和产品文档的固定口径执行经授权的真实试用，分别评价闭环完成与具体价值，不将软件检查冒充产品证据。",
+      "kind": "application",
+      "dependencies": ["feat-016"],
+      "status": "not-started",
+      "authorization": "本轮仅规划；试点参与、联系、真实素材处理与相关服务使用均需相应授权。",
+      "acceptanceCriteria": [
+        "发起人先完成真实理发及首次自行打理反馈，不进入后续五人分母；至少一人真实六步证据完整才称核心闭环跑通。",
+        "固定五名参与者及各自历程起 28 天窗口；目标至少 3/5 完整、完成者至少两人同时说明具体帮助且自行打理满意度 ≥4/5。",
+        "同时报告完整 / 5、价值条件 / 5、价值条件 / 完成者；失败、放弃、未理发 / 出示 / 回访分类与窗口外结果如实列出，不改分母。",
+        "删除私人内容优先，仅依获同意且不可回溯个人的统计保留必要口径；未经授权不联系他人、上传照片或处理个人资料。",
+        "同一版本有 PLAN.md §7 要求的自动回归和独立真实观察证据；如实区分实验结束与目标达成，目标未达不宣称 V1 试点成功。"
+      ],
+      "evidence": "仅有开发计划，尚未开展真实试用或采集试点结果。"
+    }
+  ]
+}
